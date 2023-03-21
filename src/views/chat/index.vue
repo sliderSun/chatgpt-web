@@ -44,6 +44,12 @@ const recording = ref<boolean>(false)
 const audioMode = ref<boolean>(false)
 const actionVisible = ref<boolean>(true)
 
+// 未知原因刷新页面，loading 状态不会重置，手动重置
+dataSources.value.forEach((item, index) => {
+  if (item.loading)
+    updateChatSome(+uuid, index, { loading: false })
+})
+
 function isServerError(responseText: string) {
   if (responseText.startsWith('ChatGptWebServerError:'))
     return true
