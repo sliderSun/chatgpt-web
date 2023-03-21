@@ -16,6 +16,7 @@ RUN pip install --upgrade pip && pip install --upgrade --no-cache-dir -r require
 
 # 设置环境变量
 ENV OPENAI_API_KEY=""
+ENV OPENAI_TIMEOUT_MS="100000"
 ENV API_MODEL="gpt-3.5-turbo"
 ENV SOCKS_PROXY=""
 ENV HOST="127.0.0.1"

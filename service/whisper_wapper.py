@@ -19,14 +19,16 @@ def upload_file_to_file_obj(upload_file: UploadFile, file_obj: Optional[BytesIO]
     return file_obj
 
 
-async def process_audio(audio, model="whisper-1"):
+async def process_audio(audio, timeout, model="whisper-1"):
     try:
         file = upload_file_to_file_obj(audio)
 
         params = dict(
             model=model,
-            file=file
+            file=file,
+            request_timeout=timeout,
         )
+
         transcript = await _create_async(params)
         if transcript is None:
             yield Errors.SOMETHING_WRONG_IN_OPENAI_WHISPER_API.value

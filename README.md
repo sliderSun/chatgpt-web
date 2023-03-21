@@ -99,13 +99,25 @@ pip install --no-cache-dir -r requirements.txt
 
 ### 后端服务
 
-只有`OPENAI_API_KEY`是必填的，需要先去[OpenAI](https://platform.openai.com/)
+只有`--openai_api_key`是必填的启动参数，需要先去[OpenAI](https://platform.openai.com/)
 注册账号，然后在[这里](https://platform.openai.com/account/api-keys)获取`OPENAI_API_KEY`。
 
 ```shell
 # 进入文件夹 `/service` 运行以下命令
-python main.py --openai_api_key="$OPENAI_API_KEY" --api_model="$API_MODEL" --socks_proxy="$SOCKS_PROXY" --host="$HOST" --port="$PORT"
-# 后端服务的默认端口号是3002，可以通过 --port 参数修改
+python main.py --openai_api_key="$OPENAI_API_KEY"
+```
+
+除了`openai_api_key`这个必填的参数之外，还有以下可选参数可用：
+
+- `openai_timeout_ms` 访问OpenAI的超时时间(毫秒)，默认值为 '100000'
+- `api_model` 默认值为 gpt-3.5-turbo
+- `socks_proxy` Socks代理，默认值为空字符串，格式示例: `http://127.0.0.1:10808`
+- `host` HOST，默认值为 0.0.0.0
+- `port` PORT，默认值为 3002
+
+也就是说你也可以这样启动
+```shell
+python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_TIMEOUT_MS" --api_model="$API_MODEL" --socks_proxy="$SOCKS_PROXY" --host="$HOST" --port="$PORT"
 ```
 
 ### 前端网页
@@ -155,6 +167,8 @@ pnpm dev
         - 3002:3002
       environment:
         OPENAI_API_KEY: your_openai_api_key
+        # 访问OpenAI的超时时间(毫秒)，可选，默认值为 '100000'
+        OPENAI_TIMEOUT_MS: '100000'
         # 可选，默认值为 gpt-3.5-turbo
         API_MODEL: gpt-3.5-turbo
         # Socks代理，可选，格式为 http://127.0.0.1:10808
@@ -184,6 +198,7 @@ pnpm dev
 	# 或后台运行
 	docker-compose up -d
 	```
+	**建议先在前台运行试用一下，看看有没有报错，如果启动和使用都没有问题，再改成后台运行。**
 
 ## 使用最新版本docker镜像启动
 
@@ -216,6 +231,8 @@ pnpm dev
       environment:
         # 记得填写你的OPENAI_API_KEY
         OPENAI_API_KEY: your_openai_api_key
+        # 访问OpenAI的超时时间(毫秒)，可选，默认值为 '100000'
+        OPENAI_TIMEOUT_MS: '100000'
         # 可选，默认值为 gpt-3.5-turbo
         API_MODEL: gpt-3.5-turbo
         # Socks代理，可选，格式为 http://127.0.0.1:10808
@@ -245,6 +262,7 @@ pnpm dev
 	# 或后台运行
 	docker-compose up -d
 	```
+	**建议先在前台运行试用一下，看看有没有报错，如果启动和使用都没有问题，再改成后台运行。**
 
 ## 常见问题
 

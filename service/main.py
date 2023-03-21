@@ -13,13 +13,20 @@ import argparse
 log_folder = os.path.join(abspath(dirname(__file__)), "log")
 logger.add(os.path.join(log_folder, "{time}.log"), level="INFO")
 
-massage_store = MessageStore(db_path="message_store.json", table_name="chatgpt", max_size=100000)
+DEFAULT_TIMEOUT_MS_STRING = "100000"
+MIN_TIMEOUT_MS = 15000
+DEFAULT_DB_SIZE = 100000
+
+massage_store = MessageStore(db_path="message_store.json", table_name="chatgpt", max_size=DEFAULT_DB_SIZE)
 openai_api_key = None
 host = None
 port = None
 api_model = None
 socks_proxy = None
-timeout_ms = None
+# Timeout for OpenAI API
+openai_timeout = None
+# Timeout for FastAPI
+# service_timeout = None
 
 app = FastAPI()
 
@@ -37,7 +44,7 @@ async def config():
         data=dict(
             apiModel=API_MODEL,
             socksProxy=SOCKS_PROXY,
-            timeoutMs=TIMEOUT_MS
+            timeoutMs=OPENAI_TIMEOUT * 1000,
         )
     ))
 
@@ -61,13 +68,13 @@ async def chat_process(request_data: dict):
     else:
         top_p = 1
 
-    answer_text = process(prompt, options, memory_count, top_p, MASSAGE_STORE, model=API_MODEL)
+    answer_text = process(prompt, options, memory_count, top_p, MASSAGE_STORE, OPENAI_TIMEOUT, model=API_MODEL)
     return StreamingResponse(content=answer_text, headers=stream_response_headers, media_type="text/event-stream")
 
 
 @app.post("/audio-chat-process")
 async def audio_chat_process(audio: UploadFile = File(...)):
-    prompt = process_audio(audio, "whisper-1")
+    prompt = process_audio(audio, OPENAI_TIMEOUT, "whisper-1")
     return StreamingResponse(content=prompt, headers=stream_response_headers, media_type="text/event-stream")
 
 
@@ -79,7 +86,12 @@ def init_config():
                         help='OpenAI API model, default is gpt-3.5-turbo')
     parser.add_argument('--socks_proxy', type=str, default="",
                         help='Socks proxy, default is "", e.g. http://127.0.0.1:10808')
-    parser.add_argument('--timeout_ms', type=str, default="100000", help="Timeout for OpenAI API, default is '100000'")
+    parser.add_argument('--timeout_ms', type=str, default=DEFAULT_TIMEOUT_MS_STRING,
+                        help="(Deprecate) Timeout for OpenAI API, default is '100000'")
+    parser.add_argument('--openai_timeout_ms', type=str, default=DEFAULT_TIMEOUT_MS_STRING,
+                        help="Timeout for OpenAI API, default is '100000'")
+    # parser.add_argument('--service_timeout_ms', type=str, default=DEFAULT_TIMEOUT_MS_STRING,
+    #                     help="Timeout for backend service, default is '100000'")
     parser.add_argument('--host', type=str, default="0.0.0.0", help='Host for server, default is 0.0.0.0')
     parser.add_argument('--port', type=str, default="3002", help="Port for server, default is '3002'")
     args = parser.parse_args()
@@ -110,12 +122,43 @@ def init_config():
     else:
         logger.info("Socks proxy is disabled.")
 
-    timeout_ms = args.timeout_ms or 100000
-    if isinstance(timeout_ms, str):
+    if DEFAULT_TIMEOUT_MS_STRING != args.timeout_ms:
+        logger.warning("The parameter '--timeout_ms' is deprecated, please use '--openai_timeout_ms' instead.")
+        args.openai_timeout_ms = args.timeout_ms
+
+    openai_timeout_ms = args.openai_timeout_ms or DEFAULT_TIMEOUT_MS_STRING
+
+    if isinstance(openai_timeout_ms, str):
         try:
-            timeout_ms = int(timeout_ms)
+            openai_timeout_ms = int(openai_timeout_ms)
         except:
-            timeout_ms = 100000
+            openai_timeout_ms = DEFAULT_TIMEOUT_MS_STRING
+
+    if openai_timeout_ms < MIN_TIMEOUT_MS:
+        openai_timeout_ms = MIN_TIMEOUT_MS
+        logger.warning(
+            "OpenAI timeout is too short, the system has automatically set it to {openai_timeout_ms}(ms).".format(
+                openai_timeout_ms=MIN_TIMEOUT_MS))
+
+    openai_timeout = openai_timeout_ms / 1000
+
+    # service_timeout_ms = args.service_timeout_ms or 100000
+    # if isinstance(service_timeout_ms, str):
+    #     try:
+    #         service_timeout_ms = int(service_timeout_ms)
+    #     except:
+    #         service_timeout_ms = 100000
+
+    # if service_timeout_ms < 15000:
+    #     service_timeout_ms = 15000
+    #     logger.warning("Service timeout is too short, the system has automatically set it to 15000(ms).")
+
+    # service_timeout = service_timeout_ms / 1000
+
+    # if openai_timeout_ms > service_timeout_ms:
+    #     openai_timeout = service_timeout
+    #     logger.warning(
+    #         "OpenAI timeout is longer than service timeout, the system has automatically set it to the same as service timeout.")
 
     host = args.host or "0.0.0.0"
     port = args.port or 3002
@@ -127,15 +170,17 @@ def init_config():
             logger.error(err)
             raise TypeError(err)
 
-    return massage_store, openai_api_key, host, port, api_model, socks_proxy, timeout_ms
+    return massage_store, openai_api_key, host, port, api_model, socks_proxy, openai_timeout
 
 
 if __name__ == "__main__":
-    MASSAGE_STORE, OPENAI_API_KEY, HOST, PORT, API_MODEL, SOCKS_PROXY, TIMEOUT_MS = init_config()
+    MASSAGE_STORE, OPENAI_API_KEY, HOST, PORT, API_MODEL, SOCKS_PROXY, OPENAI_TIMEOUT = init_config()
     logger.info("OPENAI_API_KEY:{}".format(OPENAI_API_KEY))
     logger.info("HOST:{}".format(HOST))
     logger.info("PORT:{}".format(PORT))
     logger.info("API_MODEL:{}".format(API_MODEL))
     logger.info("SOCKS_PROXY:{}".format(SOCKS_PROXY))
-    logger.info("TIMEOUT_MS:{}".format(TIMEOUT_MS))
+    logger.info("OPENAI_TIMEOUT_MS:{}".format(OPENAI_TIMEOUT * 1000))
+    # logger.info("SERVICE_TIMEOUT_MS:{}".format(SERVICE_TIMEOUT * 1000))
+
     uvicorn.run(app, host=HOST, port=PORT)

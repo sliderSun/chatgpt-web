@@ -14,16 +14,9 @@ from errors import Errors
 base = {"role": "system", "content": "You are a helpful assistant."}
 
 
-async def process(prompt, options, memory_count, top_p, message_store, model="gpt-3.5-turbo"):
+async def process(prompt, options, memory_count, top_p, message_store, timeout, model="gpt-3.5-turbo"):
     """
     发文字消息
-    :param prompt:
-    :param options:
-    :param memory_count:
-    :param top_p:
-    :param message_store:
-    :param model:
-    :return:
     """
     # 不能是空消息
     if not prompt:
@@ -73,7 +66,7 @@ async def process(prompt, options, memory_count, top_p, message_store, model="gp
 
         # send to OpenAI
         params = dict(
-            stream=True, messages=messages, model=model, top_p=top_p
+            stream=True, messages=messages, model=model, top_p=top_p, timeout=timeout
         )
         if parent_message_id:
             params["request_id"] = parent_message_id
