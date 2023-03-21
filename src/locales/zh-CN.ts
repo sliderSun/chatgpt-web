@@ -30,6 +30,8 @@ export default {
     openMicrophoneFailedTitle: '打开麦克风失败',
     openMicrophoneFailedText: '需要https环境并且在设置中开启权限',
     stopResponding: '停止回复',
+    preview: '预览',
+    showRawText: '显示原文',
   },
   setting: {
     setting: '设置',

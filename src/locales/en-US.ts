@@ -30,6 +30,8 @@ export default {
     openMicrophoneFailedTitle: 'Microphone Opening Failed',
     openMicrophoneFailedText: 'HTTPS environment and permission are required',
     stopResponding: 'Stop Responding',
+    preview: 'Preview',
+    showRawText: 'Show as raw text',
   },
   setting: {
     setting: 'Setting',

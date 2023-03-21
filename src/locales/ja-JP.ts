@@ -30,6 +30,8 @@ export default {
     openMicrophoneFailedTitle: 'マイクのオープンに失敗しました',
     openMicrophoneFailedText: 'HTTPS環境下で、設定でマイクの使用が許可されていることを確認してください',
     stopResponding: '応答を停止する',
+    preview: 'プレビュー',
+    showRawText: '生のテキストを表示する',
   },
   setting: {
     setting: '設定',
