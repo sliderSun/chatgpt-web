@@ -1,4 +1,5 @@
 <script setup lang='ts'>
+import type { Ref } from 'vue'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { NButton, NInput, useDialog } from 'naive-ui'
@@ -40,6 +41,7 @@ const isAudioPrompt = ref<boolean>(false)
 const loading = ref<boolean>(false)
 const recProtectionPeriod = ref<boolean>(false)
 const sendingRecord = ref<boolean>(false)
+const inputRef = ref<Ref | null>(null)
 const recording = ref<boolean>(false)
 const audioMode = ref<boolean>(false)
 const actionVisible = ref<boolean>(true)
@@ -663,6 +665,8 @@ const footerClass = computed(() => {
 
 onMounted(() => {
   scrollToBottom()
+  if (inputRef.value)
+    inputRef.value?.focus()
 })
 
 onUnmounted(() => {
@@ -741,6 +745,7 @@ onUnmounted(() => {
           </div>
           <NInput
             v-if="!audioMode"
+            ref="inputRef"
             v-model:value="prompt"
             autofocus
             type="textarea"
