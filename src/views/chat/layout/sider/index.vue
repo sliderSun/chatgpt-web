@@ -17,6 +17,8 @@ const collapsed = computed(() => appStore.siderCollapsed)
 function handleAdd(newChatText: string) {
   chatStore.addHistory({ title: newChatText, uuid: Date.now(), isEdit: false })
   appStore.setFocusTextarea()
+  if (isMobile.value)
+    appStore.setSiderCollapsed(true)
 }
 
 function handleUpdateCollapsed() {
