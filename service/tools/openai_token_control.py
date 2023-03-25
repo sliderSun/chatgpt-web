@@ -3,11 +3,9 @@ import tiktoken
 MAX_RANGES = 10
 
 
-def discard_overlimit_messages(messages: list, max_token: int) -> list:
+def discard_overlimit_messages(messages: list, model: str, max_token: int) -> list:
     """
     Discards messages that exceed the maximum number of tokens allowed by OpenAI.
-    :param messages:
-    :return:
     """
     range_count = 0
     while True:
@@ -19,7 +17,7 @@ def discard_overlimit_messages(messages: list, max_token: int) -> list:
         if range_count > MAX_RANGES:
             return messages
 
-        token_count = num_tokens_from_messages(messages)
+        token_count = num_tokens_from_messages(messages, model=model)
 
         range_count += 1
 
@@ -45,26 +43,39 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
     try:
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
+        print("Warning: model not found. Using cl100k_base encoding.")
         encoding = tiktoken.get_encoding("cl100k_base")
-    if model in ["gpt-3.5-turbo-0301", "gpt-4", "gpt-4-0314", "gpt-4-32k",
-                 "gpt-4-32k-0314"]:  # note: future models may deviate from this
-        num_tokens = 0
-        for message in messages:
-            num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n
-            for key, value in message.items():
-                num_tokens += len(encoding.encode(value))
-                if key == "name":  # if there's a name, the role is omitted
-                    num_tokens += -1  # role is always required and always 1 token
-        num_tokens += 2  # every reply is primed with <im_start>assistant
-        return num_tokens
+
+    if model == "gpt-3.5-turbo":
+        print("Warning: gpt-3.5-turbo may change over time. Returning num tokens assuming gpt-3.5-turbo-0301.")
+        return num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301")
+    elif model == "gpt-4":
+        print("Warning: gpt-4 may change over time. Returning num tokens assuming gpt-4-0314.")
+        return num_tokens_from_messages(messages, model="gpt-4-0314")
+    elif model == "gpt-3.5-turbo-0301":
+        tokens_per_message = 4  # every message follows <|start|>{role/name}\n{content}<|end|>\n
+        tokens_per_name = -1  # if there's a name, the role is omitted
+    elif model == "gpt-4-0314":
+        tokens_per_message = 3
+        tokens_per_name = 1
     else:
-        raise NotImplementedError(f"""num_tokens_from_messages() is not presently implemented for model {model}.
-  See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
+        raise NotImplementedError(
+            f"""num_tokens_from_messages() is not implemented for model {model}. See https://github.com/openai/openai-python/blob/main/chatml.md for information on how messages are converted to tokens.""")
+    num_tokens = 0
+    for message in messages:
+        num_tokens += tokens_per_message
+        for key, value in message.items():
+            num_tokens += len(encoding.encode(value))
+            if key == "name":
+                num_tokens += tokens_per_name
+    num_tokens += 3  # every reply is primed with <|start|>assistant<|message|>
+    return num_tokens
 
 
 if __name__ == '__main__':
     print(num_tokens_from_string("test", "cl100k_base"))
     messages = [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "test"}]
     print(num_tokens_from_messages(messages, "gpt-3.5-turbo-0301"))
-    print(discard_overlimit_messages(
-        [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "test"}]))
+
+    print(num_tokens_from_messages(messages, "gpt-4"))
+    print(num_tokens_from_messages(messages, "gpt-3.5-turbo"))

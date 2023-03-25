@@ -62,7 +62,7 @@ async def process(prompt, options, memory_count, top_p, message_store, timeout, 
 
         # 消息不能超过token限制
         # todo 压缩过去消息
-        messages = discard_overlimit_messages(messages, max_token)
+        messages = discard_overlimit_messages(messages, model, max_token)
 
         # send to OpenAI
         params = dict(
