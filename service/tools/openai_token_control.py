@@ -1,20 +1,29 @@
 import tiktoken
 
-GPT_35_MAX_TOKEN = 4096
+MAX_RANGES = 10
 
 
-def discard_overlimit_messages(messages: list):
+def discard_overlimit_messages(messages: list, max_token: int) -> list:
     """
     Discards messages that exceed the maximum number of tokens allowed by OpenAI.
-    only for gpt-3.5 now
     :param messages:
     :return:
     """
-
+    range_count = 0
     while True:
+        # 如果消息太少，就不处理
+        if len(messages) <= 2:
+            return messages
+
+        # 防止意外(例如num_tokens_from_messages的实现没有及时跟随openai更新)出现死循环
+        if range_count > MAX_RANGES:
+            return messages
+
         token_count = num_tokens_from_messages(messages)
 
-        if token_count <= GPT_35_MAX_TOKEN:
+        range_count += 1
+
+        if token_count <= max_token:
             return messages
         else:
             # 去掉过去的一半消息，给回答留下足够空间
@@ -37,7 +46,8 @@ def num_tokens_from_messages(messages, model="gpt-3.5-turbo-0301"):
         encoding = tiktoken.encoding_for_model(model)
     except KeyError:
         encoding = tiktoken.get_encoding("cl100k_base")
-    if model == "gpt-3.5-turbo-0301":  # note: future models may deviate from this
+    if model in ["gpt-3.5-turbo-0301", "gpt-4", "gpt-4-0314", "gpt-4-32k",
+                 "gpt-4-32k-0314"]:  # note: future models may deviate from this
         num_tokens = 0
         for message in messages:
             num_tokens += 4  # every message follows <im_start>{role/name}\n{content}<im_end>\n

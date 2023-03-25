@@ -9,6 +9,7 @@ import uvicorn
 from message_store import MessageStore
 from whisper_wapper import process_audio
 import argparse
+from api_model import ApiModel
 
 log_folder = os.path.join(abspath(dirname(__file__)), "log")
 logger.add(os.path.join(log_folder, "{time}.log"), level="INFO")
@@ -16,17 +17,10 @@ logger.add(os.path.join(log_folder, "{time}.log"), level="INFO")
 DEFAULT_TIMEOUT_MS_STRING = "100000"
 MIN_TIMEOUT_MS = 15000
 DEFAULT_DB_SIZE = 100000
+DEFAULT_API_MODEL = "gpt-3.5-turbo"
+DEFAULT_MAX_TOKEN = 4096
 
 massage_store = MessageStore(db_path="message_store.json", table_name="chatgpt", max_size=DEFAULT_DB_SIZE)
-openai_api_key = None
-host = None
-port = None
-api_model = None
-socks_proxy = None
-# Timeout for OpenAI API
-openai_timeout = None
-# Timeout for FastAPI
-# service_timeout = None
 
 app = FastAPI()
 
@@ -68,7 +62,8 @@ async def chat_process(request_data: dict):
     else:
         top_p = 1
 
-    answer_text = process(prompt, options, memory_count, top_p, MASSAGE_STORE, OPENAI_TIMEOUT, model=API_MODEL)
+    answer_text = process(prompt, options, memory_count, top_p, MASSAGE_STORE, OPENAI_TIMEOUT, MAX_TOKEN,
+                          model=API_MODEL)
     return StreamingResponse(content=answer_text, headers=stream_response_headers, media_type="text/event-stream")
 
 
@@ -103,16 +98,22 @@ def init_config():
     openai_api_key = args.openai_api_key
     openai.api_key = args.openai_api_key
 
-    api_model = args.api_model
-    if not api_model:
+    input_api_model = args.api_model
+    if not input_api_model:
         err = "API model is not found."
         logger.error(err)
         raise TypeError(err)
-    if "gpt-3.5-turbo" != api_model:
-        warning = "Api module '{}' has not been tested and there is no guarantee that it will work properly.".format(
-            api_model
+
+    if input_api_model not in ApiModel.KNOWN_API_MODEL_NAMES:
+        warning = "Unknown Api model '{}'. Legal settings are {}, The system has automatically set it to {}".format(
+            input_api_model,
+            ApiModel.KNOWN_API_MODEL_NAMES,
+            DEFAULT_API_MODEL
         )
         logger.warning(warning)
+
+    api_model = ApiModel.get_api_model_name(input_api_model, DEFAULT_API_MODEL)
+    max_token = ApiModel.get_max_token(api_model, DEFAULT_MAX_TOKEN)
 
     socks_proxy = args.socks_proxy
     if socks_proxy:
@@ -170,15 +171,16 @@ def init_config():
             logger.error(err)
             raise TypeError(err)
 
-    return massage_store, openai_api_key, host, port, api_model, socks_proxy, openai_timeout
+    return massage_store, openai_api_key, host, port, api_model, max_token, socks_proxy, openai_timeout
 
 
 if __name__ == "__main__":
-    MASSAGE_STORE, OPENAI_API_KEY, HOST, PORT, API_MODEL, SOCKS_PROXY, OPENAI_TIMEOUT = init_config()
+    MASSAGE_STORE, OPENAI_API_KEY, HOST, PORT, API_MODEL, MAX_TOKEN, SOCKS_PROXY, OPENAI_TIMEOUT = init_config()
     logger.info("OPENAI_API_KEY:{}".format(OPENAI_API_KEY))
     logger.info("HOST:{}".format(HOST))
     logger.info("PORT:{}".format(PORT))
     logger.info("API_MODEL:{}".format(API_MODEL))
+    logger.info("MAX_TOKEN:{}".format(MAX_TOKEN))
     logger.info("SOCKS_PROXY:{}".format(SOCKS_PROXY))
     logger.info("OPENAI_TIMEOUT_MS:{}".format(OPENAI_TIMEOUT * 1000))
     # logger.info("SERVICE_TIMEOUT_MS:{}".format(SERVICE_TIMEOUT * 1000))

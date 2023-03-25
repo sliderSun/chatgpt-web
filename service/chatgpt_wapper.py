@@ -14,7 +14,7 @@ from errors import Errors
 base = {"role": "system", "content": "You are a helpful assistant."}
 
 
-async def process(prompt, options, memory_count, top_p, message_store, timeout, model="gpt-3.5-turbo"):
+async def process(prompt, options, memory_count, top_p, message_store, timeout, max_token, model="gpt-3.5-turbo"):
     """
     发文字消息
     """
@@ -62,7 +62,7 @@ async def process(prompt, options, memory_count, top_p, message_store, timeout, 
 
         # 消息不能超过token限制
         # todo 压缩过去消息
-        messages = discard_overlimit_messages(messages)
+        messages = discard_overlimit_messages(messages, max_token)
 
         # send to OpenAI
         params = dict(
