@@ -16,12 +16,11 @@
 	- [快速部署](#快速部署)
 	- [开发环境搭建](#开发环境搭建)
 		- [Node](#Node)
-		- [PNPM](#PNPM)
 		- [Python](#Python)
 	- [开发环境启动项目](#开发环境启动项目)
 		- [后端](#后端服务)
 		- [前端](#前端网页)
-	- [打包为docker容器](#打包为docker容器)
+	- [打包和部署](#打包和部署)
 		- [前端打包](#前端资源打包(需要安装node和docker、docker-compose))
 		- [后端打包](#后端服务打包)
 	- [使用DockerCompose启动](#使用DockerCompose启动)
@@ -32,34 +31,32 @@
 
 ## 介绍
 
-这是一个可以自己在本地部署的`ChatGpt`网页，使用`OpenAI`的官方API接入`gpt-3.5-turbo`模型来实现接近`ChatGPT Plus`的对话效果。
+这是一个可以自己在本地部署的`ChatGpt`网页，使用`OpenAI`的官方API接入`gpt-3.5-turbo`或`gpt-4`模型来实现接近`ChatGPT Plus`的对话效果。
 源代码Fork和修改于[Chanzhaoyu/chatgpt-web](https://github.com/Chanzhaoyu/chatgpt-web/)
 
 与OpenAI官方提供的付费版本`ChatGPT Plus`对比，`ChatGPT Web`有以下优势：
 
-1. **省钱**。你可以用1折左右的价格，体验与`ChatGPT Plus`
+1. **省钱(仅限`gpt-3.5-turbo`)**。你可以用1折左右的价格，体验与`ChatGPT Plus`
 	 几乎相同的对话服务。对于日常学习工作使用，你不必每月花费20$购买Plus服务，使用本项目自己对接API的使用成本，是`ChatGPT Plus`
 	 的1/10左右。
 2. **0门槛使用**。你可以将自建的`ChatGPT Web`
 	 站点分享给家人和朋友，他们不再需要经历“解决网络问题”-“登录”-“输入密码”-“点选验证码”这一连串麻烦的环节，就可以轻松享受到`ChatGPT Plus`
 	 带来的生产力提升。
 3. **可以缓解网络封锁的影响**。`ChatGPT Web`只需要一个`OpenAI API Key`即可使用，如果你所在的地区无法访问`OpenAI`
-	 ，你可以将`ChatGPT Web`部署在海外服务器上，或在当地服务器上使用`Socks5`代理来转发请求给代理软件，即可正常使用。
+	 ，你可以将`ChatGPT Web`部署在海外服务器上，或在当地服务器上配置`socks_proxy`参数来转发请求给代理软件，即可正常使用。
 
 和[Chanzhaoyu的原版](https://github.com/Chanzhaoyu/chatgpt-web/)的主要区别：
 
-1. 专注于易用、易部署、不操心。对小白用户友好，部署和使用的门槛比原版更低
+1. 专注于易用、易部署、不操心，我将尽我所能做到对小白用户友好，因此本项目也会舍弃一些专业功能，例如：
 
-	 1.	没有反向代理功能
-   2. 没有导入和管理Prompt模板的功能，使用者没有“这个链接干什么用的”、“什么是json文件”、“为什么要我自己审核json文件的安全性，怎么审核？”此类烦恼
-   3. 可以随机生成头像，不需要自己去找头像链接
-   4. 附带打包好的前端资源，自己部署不再需要安装开发环境
+	 - 不支持反向代理。很多用户喜欢使用第三方给的反代地址，但是它们的安全性存疑、封号也超级快。我认为你只是想有个稳定能用的AI助手，并不想折腾这些。
+   - 不做导入和管理Prompt模板的功能。使用者没有“这个链接干什么用的”、“什么是json文件”、“为什么要我自己审核json文件的安全性，怎么审核？”此类烦恼
 
 2. 可以识别语音消息：通过接入`whisper-1`API实现。懒得打字的时候很好用
 3. 可以微调参数：通过设置可以调整`ChatGpt`的性格
 4. 可以“记住”更多的上下文：聊天记录保存在服务器端，不会因为网页端清理缓存而丢失上下文，影响回答质量
 
-其它更新：
+其它区别：
 1. 增加日语界面
 2. 优化了移动端体验
 
@@ -79,8 +76,6 @@
 node -v
 ```
 
-### PNPM
-
 如果你没有安装过 `pnpm`
 
 ```shell
@@ -97,7 +92,17 @@ pip install --no-cache-dir -r requirements.txt
 
 ## 开发环境启动项目
 
-### 后端服务
+### 启动前端服务
+
+根目录下运行以下命令
+
+```shell
+# 前端网页的默认端口号是1002，对接的后端服务的默认端口号是3002，可以在 .env 和 .vite.config.ts 文件中修改
+pnpm bootstrap
+pnpm dev
+```
+
+### 启动后端服务
 
 只有`--openai_api_key`是必填的启动参数，需要先去[OpenAI](https://platform.openai.com/)
 注册账号，然后在[这里](https://platform.openai.com/account/api-keys)获取`OPENAI_API_KEY`。
@@ -110,8 +115,8 @@ python main.py --openai_api_key="$OPENAI_API_KEY"
 除了`openai_api_key`这个必填的参数之外，还有以下可选参数可用：
 
 - `openai_timeout_ms` 访问OpenAI的超时时间(毫秒)，默认值为 '100000'
-- `api_model` 默认值为 gpt-3.5-turbo
-- `socks_proxy` Socks代理，默认值为空字符串，格式示例: `http://127.0.0.1:10808`
+- `api_model` 默认值为 gpt-3.5-turbo 也可以使用很贵的 gpt-4
+- `socks_proxy` 代理，默认值为空字符串，格式示例: `http://127.0.0.1:10808`
 - `host` HOST，默认值为 0.0.0.0
 - `port` PORT，默认值为 3002
 
@@ -120,19 +125,10 @@ python main.py --openai_api_key="$OPENAI_API_KEY"
 python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_TIMEOUT_MS" --api_model="$API_MODEL" --socks_proxy="$SOCKS_PROXY" --host="$HOST" --port="$PORT"
 ```
 
-### 前端网页
 
-根目录下运行以下命令
+## 打包和部署
 
-```shell
-# 前端网页的默认端口号是1002，对接的后端服务的默认端口号是3002，可以在 .env 和 .vite.config.ts 文件中修改
-pnpm bootstrap
-pnpm dev
-```
-
-## 打包为docker容器
-
-### 前端资源打包(需要安装node和docker、docker-compose)
+### 前端资源打包(需要安装node)
 
 1. 根目录下运行以下命令
 	 ```shell
@@ -143,10 +139,7 @@ pnpm dev
 	cp dist/ docker-compose/nginx/html -r
 	```
 
-3. 修改`/docker-compose/nginx/nginx.conf`文件，填写你的服务器IP
-
-
-### 后端服务打包
+### 后端服务打包为docker容器(需要安装docker和docker-compose)
 
 1. 进入文件夹 `/service` 运行以下命令
 	 ```shell
@@ -172,12 +165,14 @@ pnpm dev
         # 可选，默认值为 gpt-3.5-turbo
         API_MODEL: gpt-3.5-turbo
         # Socks代理，可选，格式为 http://127.0.0.1:10808
-        SOCKS_PROXY: xxxx
+        SOCKS_PROXY: ''
         # HOST，可选，默认值为 0.0.0.0
         HOST: 0.0.0.0
         # PORT，可选，默认值为 3002
         PORT: 3002
     nginx:
+			depends_on:
+				- app
       image: nginx:alpine
       ports:
         - '80:80'
@@ -208,12 +203,6 @@ pnpm dev
 
 	前端资源的压缩包在`/docker-compose/nginx/html.zip`，使用`unzip html.zip`将其解压缩。你应该可以看到`/docker-compose/nginx/html`下面有`index.html`和其他前端资源。
 
-- 然后修改`docker-compose/nginx/nginx.conf`文件，填写你的服务器ip，假如你的服务器ip是`122.122.122.122`，那么
-
-	```
-	proxy_pass http://122.122.122.122:3002/;
-	```
-
 - 最后修改`docker-compose/docker-compose.yml`文件。
 
 	除了填写你自己的`OPENAI_API_KEY`之外，还要根据自己的系统环境修改`image`的标签，如果你部署用的是x86架构的机器，就填写`wenjing95/chatgpt-web-backend:x86_64`，如果你用的是arm架构的机器，就填写`wenjing95/chatgpt-web-backend:aarch64`。
@@ -236,12 +225,14 @@ pnpm dev
         # 可选，默认值为 gpt-3.5-turbo
         API_MODEL: gpt-3.5-turbo
         # Socks代理，可选，格式为 http://127.0.0.1:10808
-        SOCKS_PROXY: “”
+        SOCKS_PROXY: ''
         # HOST，可选，默认值为 0.0.0.0
         HOST: 0.0.0.0
         # PORT，可选，默认值为 3002
         PORT: 3002
     nginx:
+			depends_on:
+				- app
       image: nginx:alpine
       ports:
         - '80:80'
