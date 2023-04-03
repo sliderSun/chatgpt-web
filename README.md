@@ -141,13 +141,13 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
 	```
 3. 配置访问权限
 	```shell
-	# 进入文件夹 `/docker-compose/nginx`
-  cd docker-compose/nginx
-  # 运行add_user.sh脚本，根据提示创建用户名和密码
-  # (密码文件将被保存在 /docker-compose/nginx/auth/.htpasswd)
-  bash add_user.sh
-  # 如果你想删除一个用户，可以使用remove_user.sh脚本
-  bash remove_user.sh
+	  # 进入文件夹 `/docker-compose/nginx`
+    cd docker-compose/nginx
+    # 运行add_user.sh脚本，根据提示创建用户名和密码
+    # (密码文件将被保存在 /docker-compose/nginx/auth/.htpasswd)
+    bash add_user.sh
+    # 如果你想删除一个用户，可以使用remove_user.sh脚本
+    bash remove_user.sh
 	```
 
 ### 后端服务打包为docker容器(需要安装docker和docker-compose)
@@ -319,8 +319,8 @@ A: 因为`entrypoint.sh`文件的换行符是`LF`，而不是`CRLF`，如果你�
 感谢原作者[Chanzhaoyu](https://github.com/Chanzhaoyu/chatgpt-web/)和所有做过贡献的人，还有生产力工具`ChatGpt`
 和`Github Copilot`!
 
-<a href="https://github.com/Chanzhaoyu/chatgpt-web/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Chanzhaoyu/chatgpt-web" />
+<a href="https://github.com/WenJing95/chatgpt-web/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=WenJing95/chatgpt-web" />
 </a>
 
 ## 赞助
