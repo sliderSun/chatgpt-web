@@ -49,7 +49,8 @@
 
 1. 专注于易用、易部署、不操心，我将尽我所能做到对小白用户友好，因此本项目也会舍弃一些专业功能，例如：
 
-	 - 不支持反向代理。很多用户喜欢使用第三方给的反代地址，但是它们的安全性存疑、封号也超级快。我认为你只是想有个稳定能用的AI助手，并不想折腾这些。
+	 - 不支持accessToken这类非官方使用方式。我认为你只是希望有个稳定能用的AI助手，并不想折腾这些
+	 - 不支持反向代理。因为很多用户喜欢使用第三方给的反代地址，但是它们的安全性存疑、封号也超级快！
    - 不做导入和管理Prompt模板的功能。使用者没有“这个链接干什么用的”、“什么是json文件”、“为什么要我自己审核json文件的安全性，怎么审核？”此类烦恼
 
 2. 可以识别语音消息：通过接入`whisper-1`API实现。懒得打字的时候很好用
@@ -138,6 +139,16 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
 	```shell
 	cp dist/ docker-compose/nginx/html -r
 	```
+3. 配置访问权限
+	```shell
+	# 进入文件夹 `/docker-compose/nginx`
+  cd docker-compose/nginx
+  # 运行add_user.sh脚本，根据提示创建用户名和密码
+  # (密码文件将被保存在 /docker-compose/nginx/auth/.htpasswd)
+  bash add_user.sh
+  # 如果你想删除一个用户，可以使用remove_user.sh脚本
+  bash remove_user.sh
+	```
 
 ### 后端服务打包为docker容器(需要安装docker和docker-compose)
 
@@ -171,8 +182,8 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
         # PORT，可选，默认值为 3002
         PORT: 3002
     nginx:
-			depends_on:
-				- app
+      depends_on:
+        - app
       image: nginx:alpine
       ports:
         - '80:80'
@@ -180,6 +191,7 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
         - '80'
       volumes:
         - ./nginx/html/:/etc/nginx/html/
+        - ./nginx/auth/:/etc/nginx/auth/
         - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
       links:
         - app
@@ -195,6 +207,8 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
 	```
 	**建议先在前台运行试用一下，看看有没有报错，如果启动和使用都没有问题，再改成后台运行。**
 
+  启动成功之后，访问`http://你的机器ip`即可看到网页内容。
+
 ## 使用最新版本docker镜像启动
 
 - 如果你只是想自己使用docker部署，可以直接使用我已经打包好的镜像和前端资源
@@ -202,6 +216,19 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
 - 首先将前端资源的压缩包解压
 
 	前端资源的压缩包在`/docker-compose/nginx/html.zip`，使用`unzip html.zip`将其解压缩。你应该可以看到`/docker-compose/nginx/html`下面有`index.html`和其他前端资源。
+
+- 然后给你的网站添加用户名和密码
+
+	```shell
+  # 进入文件夹 `/docker-compose/nginx`
+  cd docker-compose/nginx
+  # 运行add_user.sh脚本，根据提示创建用户名和密码
+  # (密码文件将被保存在 /docker-compose/nginx/auth/.htpasswd)
+  bash add_user.sh
+  # 如果你想删除一个用户，可以使用remove_user.sh脚本
+  bash remove_user.sh
+	```
+
 
 - 最后修改`docker-compose/docker-compose.yml`文件。
 
@@ -231,8 +258,8 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
         # PORT，可选，默认值为 3002
         PORT: 3002
     nginx:
-			depends_on:
-				- app
+      depends_on:
+        - app
       image: nginx:alpine
       ports:
         - '80:80'
@@ -254,6 +281,8 @@ python main.py --openai_api_key="$OPENAI_API_KEY" --openai_timeout_ms="$OPENAI_T
 	docker-compose up -d
 	```
 	**建议先在前台运行试用一下，看看有没有报错，如果启动和使用都没有问题，再改成后台运行。**
+
+	启动成功之后，访问`http://你的机器ip`即可看到网页内容。
 
 ## 常见问题
 
