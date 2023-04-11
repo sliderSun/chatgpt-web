@@ -8,18 +8,18 @@ export function useLanguage() {
 
   const language = computed(() => {
     switch (appStore.language) {
-      case 'en-US':
-        setLocale('en-US')
-        return enUS
       case 'zh-CN':
         setLocale('zh-CN')
         return zhCN
+      case 'en-US':
+        setLocale('en-US')
+        return enUS
       case 'ja-JP':
         setLocale('ja-JP')
         return jaJP
       default:
         setLocale('zh-CN')
-        return enUS
+        return zhCN
     }
   })
 
