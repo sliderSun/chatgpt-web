@@ -34,7 +34,7 @@ const { scrollRef, scrollToBottom } = useScroll()
 const { uuid } = route.params as { uuid: string }
 
 const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
-const conversationList = computed(() => dataSources.value.filter(item => (!item.inversion && !item.error)))
+const conversationList = computed(() => dataSources.value.filter(item => (!item.inversion && !!item.conversationOptions)))
 
 const prompt = ref<string>('')
 const isAudioPrompt = ref<boolean>(false)
